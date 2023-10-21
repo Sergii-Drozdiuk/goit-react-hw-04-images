@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "d": "npm run lint && vite --open",
-    "b": "vite build --base=/goit-react-hw-03-image-finder/",
+    "b": "vite build --base=/goit-react-hw-04-images/",
     "lint": "eslint src",
     "lint:fix": "eslint --fix src"
   },
