@@ -1,29 +1,27 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { SearchBar } from './Searchbar/Searchbar';
 import toast, { Toaster } from 'react-hot-toast';
 import { fetchImages } from './Api/Api';
 import { Loader } from './Loader/Loader';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
-export class App extends Component {
-  state = {
-    query: '',
-    page: 1,
-    images: [],
-    loading: false,
-    error: false,
-    btnLoadMore: false,
-    perPage: 12,
-  };
 
-  async componentDidUpdate(_, prevState) {
-    if (prevState.query !== this.state.query || prevState.page !== this.state.page) {
+export function App() {
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [btnLoadMore, setBtnLoadMore] = useState(false);
+  const perPage = 12;
+
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        this.setState({ loading: true });
-        const { query, page } = this.state;
+        setLoading(true);
         const resp = await fetchImages(query, page);
         if (resp.hits.length === 0) {
-          this.setState({ error: true });
+          setError(true);
           toast.error('Sorry, there are no images matching your search query.');
         }
 
@@ -33,67 +31,65 @@ export class App extends Component {
           largeImageURL,
           tags,
         }));
-        this.setState(prevState => ({ images: [...prevState.images, ...newImages] }));
-        this.smoothScroll();
-        if (resp.totalHits !== 0 && this.state.page === 1) {
+        setImages(prevImages => [...prevImages, ...newImages]);
+        smoothScroll();
+        if (resp.totalHits !== 0 && page === 1) {
           toast.success(`Hooray! We found ${resp.totalHits} images!`);
         }
-        const totalPage = Math.ceil(resp.totalHits / this.state.perPage);
+        const totalPage = Math.ceil(resp.totalHits / perPage);
         if (totalPage > page) {
-          this.setState({ btnLoadMore: true });
+          setBtnLoadMore(true);
         } else if (totalPage === page && resp.totalHits) {
           toast.error("Sorry, but you've reached the end of search results.");
-          this.setState({ btnLoadMore: false });
+          setBtnLoadMore(false);
         }
       } catch (error) {
         toast.error(error.message);
       } finally {
-        this.setState({ loading: false });
+        setLoading(false);
       }
-    }
-  }
+    };
 
-  handleSubmit = e => {
+    if (query !== '' || page !== 1) {
+      fetchData();
+    }
+  }, [query, page]);
+
+  const handleSubmit = e => {
     e.preventDefault();
     const form = e.currentTarget;
-    const query = form.search.value.trim().toLowerCase();
-    if (query === '') {
+    const newQuery = form.search.value.trim().toLowerCase();
+    if (newQuery === '') {
       toast.error('Enter your request');
       return;
     }
-    this.setState({
-      query: query,
-      page: 1,
-      images: [],
-      error: false,
-      btnLoadMore: false,
-    });
+    setQuery(newQuery);
+    setPage(1);
+    setImages([]);
+    setError(false);
+    setBtnLoadMore(false);
   };
 
-  handleLoadMore = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
-    this.smoothScroll();
+  const handleLoadMore = () => {
+    setPage(prevPage => prevPage + 1);
+    smoothScroll();
   };
 
-  smoothScroll = () => {
+  const smoothScroll = () => {
     window.scrollBy({
       top: document.documentElement.clientHeight,
       behavior: 'smooth',
     });
   };
 
-  render() {
-    return (
-      <div className='grid grid-cols-1 gap-4 pb-2'>
-        <SearchBar onSubmit={this.handleSubmit} />
-        {this.state.images.length > 0 && <ImageGallery images={this.state.images} />}
-        {this.state.loading && <Loader />}
-        {this.state.btnLoadMore && <Button onClick={this.handleLoadMore} />}
-        {this.state.error && (
-          <p className='text-xl text-red-500'>Whoops! Error! Please reload this page!</p>
-        )}
-        <Toaster autoClose={3000} position='top-right' containerClassName='text-xs' />
-      </div>
-    );
-  }
+  return (
+    <div className='grid grid-cols-1 gap-4 pb-2'>
+      <SearchBar onSubmit={handleSubmit} />
+      {images.length > 0 && <ImageGallery images={images} />}
+      {loading && <Loader />}
+      {btnLoadMore && <Button onClick={handleLoadMore} />}
+      {error && <p className='text-xl text-red-500'>Whoops! Error! Please reload this page!</p>}
+      <Toaster autoClose={3000} position='top-right' containerClassName='text-xs' />
+    </div>
+  );
 }

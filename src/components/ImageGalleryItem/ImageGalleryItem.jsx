@@ -1,40 +1,29 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Component } from 'react';
 import { ModalWindow } from '../Modal/Modal';
 
-export class ImageGalleryItem extends Component {
-  state = {
-    modalIsOpen: false,
+export function ImageGalleryItem({ src, tags, img }) {
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+
+  const toggleModal = () => {
+    setModalIsOpen(prevModalIsOpen => !prevModalIsOpen);
   };
 
-  toggleModal = () => {
-    this.setState(prevState => ({ modalIsOpen: !prevState.modalIsOpen }));
+  const closeModal = () => {
+    setModalIsOpen(false);
   };
 
-  closeModal = () => {
-    this.setState({ modalIsOpen: false });
-  };
-
-  render() {
-    const { src, tags, img } = this.props;
-
-    return (
-      <>
-        <img
-          onClick={this.toggleModal}
-          src={src}
-          alt={tags}
-          className='h-48 w-full cursor-zoom-in rounded-lg object-cover transition-transform hover:scale-105'
-        />
-        <ModalWindow
-          src={img}
-          tags={tags}
-          modalIsOpen={this.state.modalIsOpen}
-          closeModal={this.closeModal}
-        />
-      </>
-    );
-  }
+  return (
+    <>
+      <img
+        onClick={toggleModal}
+        src={src}
+        alt={tags}
+        className='h-48 w-full cursor-zoom-in rounded-lg object-cover transition-transform hover:scale-105'
+      />
+      <ModalWindow src={img} tags={tags} modalIsOpen={modalIsOpen} closeModal={closeModal} />
+    </>
+  );
 }
 
 ImageGalleryItem.propTypes = {
